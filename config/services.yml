@@ -1,0 +1,22 @@
+services:
+    fjf2002.keycloak.usersAndGroupsInterface:
+        class: fjf2002\keycloak\core\UsersAndGroupsInterface
+        arguments:
+            - '@config'
+            - '@dbal.conn'
+            - '%tables.auth_provider_oauth_account_assoc%'
+
+    # Beware: The name of this key determines the config key names and the translation key name
+    auth.provider.oauth.service.keycloak:
+        class: fjf2002\keycloak\core\keycloak
+        arguments:
+            - '@config'
+            - '@request'
+            - '@fjf2002.keycloak.usersAndGroupsInterface'
+        tags:
+            - { name: auth.provider.oauth.service }
+
+    fjf2002.keycloak.main_listener:
+        class: fjf2002\keycloak\event\main_listener
+        tags:
+            - { name: event.listener }

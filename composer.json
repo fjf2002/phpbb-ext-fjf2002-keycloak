@@ -1,0 +1,28 @@
+{
+    "name": "fjf2002/keycloak",
+    "type": "phpbb-extension",
+    "description": "Keycloak OAuth Extension for phpBB 3.2",
+    "homepage": "https://github.com/fjf2002/phpbb-ext-fjf2002-keycloak",
+    "version": "1.0.0",
+    "time": "223-08-11",
+    "keywords": ["phpbb", "extension", "fjf2002", "keycloak"],
+    "license": "GPL-2.0-only",
+    "authors": [
+        {
+            "name": "Franz-Josef Färber",
+            "email": "franzjoseffaerber@gmail.com",
+            "homepage": "https://github.com/fjf2002/",
+            "role": "Lead Developer"
+        }
+    ],
+    "require": {
+        "php": ">=7.2.0",
+        "composer/installers": "~1.0"
+    },
+    "extra": {
+        "display-name": "Keycloak OAuth Extension",
+        "soft-require": {
+            "phpbb/phpbb": "~3.2"
+        }
+    }
+}
