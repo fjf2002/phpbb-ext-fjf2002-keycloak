@@ -14,7 +14,8 @@ class main_listener implements EventSubscriberInterface {
     static public function getSubscribedEvents() {
         return [
             'core.user_setup' => 'load_language_on_setup',
-            'core.user_setup_after' => 'user_setup_after'
+            'core.user_setup_after' => 'user_setup_after',
+            'core.login_box_modify_template_data' => 'login_box_modify_template_data'
         ];
     }
 
@@ -34,7 +35,7 @@ class main_listener implements EventSubscriberInterface {
     }
 
     /*
-     * phpBB has a re-authentification then accessing the admin panel.
+     * phpBB has a re-authentification when accessing the admin panel.
      * Since we are using OAuth, the password check will fail.
      * Mitigate that: Bypass Re-Authentification:
      *
@@ -48,5 +49,20 @@ class main_listener implements EventSubscriberInterface {
         if ($auth->acl_get('a_')) {
             $user->data['session_admin'] = "1";
         }
+    }
+
+    /**
+     * When a protected forum page is requested but the session has expired (or is non-existent),
+     * the login form would get rendered.
+     * This method prevents that.
+     * (The event core.login_box_before wouldn't work since it also gets called on the regular keycloak login procedure.)
+     */
+    public function login_box_modify_template_data($event) {
+        global $request, $auth;
+
+        // see /srv/www/vhosts/forum/htdocs/phpbb/auth/provider/oauth/oauth.php, login method:
+        $request->overwrite('oauth_service', 'keycloak');
+
+        $auth->login("", "");
     }
 }
