@@ -122,21 +122,9 @@ class UsersAndGroupsInterface {
             'oauth_provider_id' => $keycloakUsername
         ];
 
-		$sql = 'SELECT user_id
-        FROM ' . $this->oauth_account_table . "
-        WHERE provider = '" . $this->db->sql_escape($data['provider']) . "'
-          AND oauth_provider_id = '" . $this->db->sql_escape($data['oauth_provider_id']) . "'";
-
-        $result = $this->db->sql_query($sql);
-        $row = $this->db->sql_fetchrow($result);
-        $this->db->sql_freeresult($result);
-
-        if ($row) {
-            return;
-        }
-
-        // Link account
-        $sql = 'INSERT INTO ' . $this->oauth_account_table . ' ' . $this->db->sql_build_array('INSERT', $data);
+        // Link account / update account link
+        $sql = 'INSERT INTO ' . $this->oauth_account_table . ' ' . $this->db->sql_build_array('INSERT', $data)
+            . ' ON DUPLICATE KEY UPDATE oauth_provider_id = \'' . $this->db->sql_escape($keycloakUsername) . '\'';
         $result = $this->db->sql_query($sql);
         $this->db->sql_freeresult($result);
     }
