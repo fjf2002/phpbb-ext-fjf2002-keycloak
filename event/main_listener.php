@@ -49,7 +49,8 @@ class main_listener implements EventSubscriberInterface {
         return [
             'core.user_setup' => 'load_language_on_setup',
             'core.user_setup_after' => 'user_setup_after',
-            'core.login_box_modify_template_data' => 'login_box_modify_template_data'
+            'core.login_box_modify_template_data' => 'login_box_modify_template_data',
+            'core.session_kill_after' => 'session_kill_after'
         ];
     }
 
@@ -102,5 +103,24 @@ class main_listener implements EventSubscriberInterface {
         // see /srv/www/vhosts/forum/htdocs/phpbb/auth/provider/oauth/oauth.php, login method:
         $this->request->overwrite('oauth_service', 'keycloak');
         $this->auth->login("", "");
+    }
+
+    /**
+     * Logout event
+     */
+    public function session_kill_after($event) {
+        /*
+         * phpbb/auth/provider/oauth/oauth.php does not offer a keycloak logout.
+         * Reimplemented here:
+         */
+        $tokenStorage = new token_storage($this->db, $this->user, 'phpbb_oauth_tokens', 'phpbb_oauth_states');
+
+        $stdOAuth2Token = $tokenStorage->retrieveAccessToken('auth.provider.oauth.service.keycloak');
+
+        $idTokenBase64 = $stdOAuth2Token->getExtraParams()['id_token'];
+
+        $baseApiUri = $this->config['auth_oauth_keycloak_url'];
+
+        redirect("$baseApiUri/logout?id_token_hint=$idTokenBase64&post_logout_redirect_uri=" . urlencode("/"), false, true);
     }
 }
