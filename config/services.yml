@@ -5,6 +5,8 @@ services:
             - '@config'
             - '@dbal.conn'
             - '%tables.auth_provider_oauth_account_assoc%'
+            - '%core.root_path%'
+            - '%core.php_ext%'
 
     # Beware: The name of this key determines the config key names and the translation key name
     auth.provider.oauth.service.keycloak:
@@ -18,5 +20,13 @@ services:
 
     fjf2002.keycloak.main_listener:
         class: fjf2002\keycloak\event\main_listener
+        arguments:
+            - '@config'
+            - '@dbal.conn'
+            - '@request'
+            - '@user'
+            - '@auth'
+            - '%tables.auth_provider_oauth_token_storage%'
+            - '%tables.auth_provider_oauth_states%'
         tags:
             - { name: event.listener }

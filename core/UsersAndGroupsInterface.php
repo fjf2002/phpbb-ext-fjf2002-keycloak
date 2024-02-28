@@ -16,6 +16,9 @@ class UsersAndGroupsInterface {
 	/** @var string OAuth table: token storage */
 	protected $oauth_account_table;
 
+    protected string $phpbbRootPath;
+    protected string $phpExt;
+
     /** @var array of phpbb group names, indexed by group id */
     protected $phpbbGroupsById;
 
@@ -23,10 +26,17 @@ class UsersAndGroupsInterface {
     protected $phpbbGroupsByName;
 
 
-    function __construct(\phpbb\config\config $config, driver_interface $db, string $oauth_account_table) {
+    function __construct(\phpbb\config\config $config,
+        driver_interface $db,
+        string $oauth_account_table,
+        string $phpbbRootPath,
+        string $phpExt
+    ) {
         $this->config = $config;
         $this->db = $db;
         $this->oauth_account_table	= $oauth_account_table;
+        $this->phpbbRootPath = $phpbbRootPath;
+        $this->phpExt = $phpExt;
     }
 
     /**
@@ -62,7 +72,6 @@ class UsersAndGroupsInterface {
      * @return array|false
      */
     private function getUser(string $username) {
-        global $db;
         // from ./phpbb/auth/provider/db.php::login
 
         $username_clean = utf8_clean_string($username);
@@ -102,11 +111,8 @@ class UsersAndGroupsInterface {
         ];
 
         // from ./phpbb/auth/auth.php::login
-        if (!function_exists('user_add'))
-        {
-            global $phpbb_root_path;
-            global $phpEx;
-            include($phpbb_root_path . 'includes/functions_user.' . $phpEx);
+        if (!function_exists('user_add')) {
+            include($this->phpbbRootPath . 'includes/functions_user.' . $this->phpExt);
         }
 
         if (user_add($userRow) === false) {

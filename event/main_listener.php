@@ -1,11 +1,45 @@
 <?php
 namespace fjf2002\keycloak\event;
 
+use phpbb\config\config;
+use phpbb\user;
+use phpbb\auth\auth;
+use phpbb\auth\provider\oauth\token_storage;
+use phpbb\db\driver\driver_interface;
+use phpbb\request\request_interface;
 use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 
 
 // https://area51.phpbb.com/docs/dev/3.2.x/extensions/tutorial_events.html
 class main_listener implements EventSubscriberInterface {
+
+    protected config $config;
+    protected driver_interface $db;
+	protected request_interface $request;
+	protected user $user;
+    protected auth $auth;
+    protected string $oauth_token_table;
+	protected string $oauth_state_table;
+
+
+    public function __construct(
+        config $config,
+        driver_interface $db,
+		request_interface $request,
+		user $user,
+        auth $auth,
+        string $oauth_token_table,
+        string $oauth_state_table
+    ) {
+        $this->config = $config;
+		$this->db = $db;
+		$this->request = $request;
+		$this->user = $user;
+        $this->auth = $auth;
+		$this->oauth_token_table = $oauth_token_table;
+		$this->oauth_state_table = $oauth_state_table;
+    }
+
     /**
      * Assign functions defined in this class to event listeners in the core
      *
@@ -39,15 +73,13 @@ class main_listener implements EventSubscriberInterface {
      * $user->setup('acp/common');
      */
     public function user_setup_after($event) {
-        global $auth, $user, $request;
-
         /*
          * Do not show login form.
          * Instead redirect to keycloak login:
          */
-        if ($user->data['user_id'] == ANONYMOUS) {
-            $request->overwrite('oauth_service', 'keycloak');
-            $auth->login("", "");
+        if ($this->user->data['user_id'] == ANONYMOUS) {
+            $this->request->overwrite('oauth_service', 'keycloak');
+            $this->auth->login("", "");
         }
 
         /*
@@ -55,8 +87,8 @@ class main_listener implements EventSubscriberInterface {
          * Since we are using OAuth, the password check will fail.
          * Mitigate that: Bypass Re-Authentification:
          */
-        if ($auth->acl_get('a_')) {
-            $user->data['session_admin'] = "1";
+        if ($this->auth->acl_get('a_')) {
+            $this->user->data['session_admin'] = "1";
         }
     }
 
@@ -67,10 +99,8 @@ class main_listener implements EventSubscriberInterface {
      * (The event core.login_box_before wouldn't work since it also gets called on the regular keycloak login procedure.)
      */
     public function login_box_modify_template_data($event) {
-        global $request, $auth;
-
         // see /srv/www/vhosts/forum/htdocs/phpbb/auth/provider/oauth/oauth.php, login method:
-        $request->overwrite('oauth_service', 'keycloak');
-        $auth->login("", "");
+        $this->request->overwrite('oauth_service', 'keycloak');
+        $this->auth->login("", "");
     }
 }
