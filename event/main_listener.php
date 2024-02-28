@@ -20,8 +20,8 @@ class main_listener implements EventSubscriberInterface {
     }
 
     /**
-     * Load the Acme Demo language file
-     *     fjf2002/keycloak/language/en/keycloak.php
+     * Load the language file
+     *     fjf2002/keycloak/language/.../common.php
      *
      * @param \phpbb\event\data $event The event object
      */
@@ -35,17 +35,26 @@ class main_listener implements EventSubscriberInterface {
     }
 
     /*
-     * phpBB has a re-authentification when accessing the admin panel.
-     * Since we are using OAuth, the password check will fail.
-     * Mitigate that: Bypass Re-Authentification:
-     *
      * Called from ./adm/index.php line 31:
      * $user->setup('acp/common');
      */
     public function user_setup_after($event) {
-        global $auth;
-        global $user;
+        global $auth, $user, $request;
 
+        /*
+         * Do not show login form.
+         * Instead redirect to keycloak login:
+         */
+        if ($user->data['user_id'] == ANONYMOUS) {
+            $request->overwrite('oauth_service', 'keycloak');
+            $auth->login("", "");
+        }
+
+        /*
+         * phpBB has a re-authentification when accessing the admin panel.
+         * Since we are using OAuth, the password check will fail.
+         * Mitigate that: Bypass Re-Authentification:
+         */
         if ($auth->acl_get('a_')) {
             $user->data['session_admin'] = "1";
         }
@@ -62,7 +71,6 @@ class main_listener implements EventSubscriberInterface {
 
         // see /srv/www/vhosts/forum/htdocs/phpbb/auth/provider/oauth/oauth.php, login method:
         $request->overwrite('oauth_service', 'keycloak');
-
         $auth->login("", "");
     }
 }
