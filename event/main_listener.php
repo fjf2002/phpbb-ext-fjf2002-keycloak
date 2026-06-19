@@ -132,6 +132,8 @@ class main_listener implements EventSubscriberInterface {
 
         $baseApiUri = $this->config['auth_oauth_keycloak_url'];
 
+        $tokenStorage->clearAllTokens();
+
         redirect("$baseApiUri/logout?id_token_hint=$idTokenBase64&post_logout_redirect_uri=" . urlencode("/"), false, true);
     }
 }
