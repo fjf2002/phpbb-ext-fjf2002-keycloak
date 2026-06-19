@@ -136,6 +136,10 @@ class UsersAndGroupsInterface {
     }
 
     private function updateGroupMemberships(int $phpbbUserId, array $keycloakGroupNames) {
+        if (!function_exists('group_memberships')) {
+            include($this->phpbbRootPath . 'includes/functions_user.' . $this->phpExt);
+        }
+
         /* All the following group arrays have the group name as their value;
          * exception: $allPhpbbGroupsByName
          */

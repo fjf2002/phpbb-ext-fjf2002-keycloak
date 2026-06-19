@@ -1,22 +1,17 @@
 <?php
 namespace fjf2002\keycloak\core;
 
+use OAuth\Common\Http\Exception\TokenResponseException;
+use OAuth\OAuth2\Service\Exception\InvalidAuthorizationStateException;
+use \phpbb\auth\provider\oauth\service\exception;
+
 
 class keycloak extends \phpbb\auth\provider\oauth\service\base {
-	/**
-	 * @var phpbb_config
-	 */
-	protected $config;
+	protected \phpbb\config\config $config;
 
-	/**
-	 * @var phpbb_request
-	 */
-	protected $request;
+	protected \phpbb\request\request_interface $request;
 
-	/**
-	 * @var UsersAndGroupsInterface
-	 */
-	protected $usersAndGroupsInterface;
+	protected UsersAndGroupsInterface $usersAndGroupsInterface;
 
 	public function __construct(\phpbb\config\config $config, \phpbb\request\request_interface $request, UsersAndGroupsInterface $usersAndGroupsInterface) {
 		$this->config = $config;
@@ -36,11 +31,18 @@ class keycloak extends \phpbb\auth\provider\oauth\service\base {
 
 	public function perform_auth_login() {
 		if (!($this->service_provider instanceof \OAuth\OAuth2\Service\Keycloak)) {
-			throw new phpbb\auth\provider\oauth\service\exception('AUTH_PROVIDER_OAUTH_ERROR_INVALID_SERVICE_TYPE');
+			throw new exception('AUTH_PROVIDER_OAUTH_ERROR_INVALID_SERVICE_TYPE');
 		}
 
 		// This was a callback request from Keycloak IDP, get the token
-		$token = $this->service_provider->requestAccessToken($this->request->variable('code', ''));
+		try {
+			$token = $this->service_provider->requestAccessToken(
+				$this->request->variable('code', '')
+			);
+		} catch (InvalidAuthorizationStateException|TokenResponseException $e) {
+			throw new exception('AUTH_PROVIDER_OAUTH_ERROR_REQUEST');
+		}
+
 		$accessTokenPayload = json_decode(base64_decode(explode(".", $token->getAccessToken())[1]));
 
 		$username = $accessTokenPayload->preferred_username;

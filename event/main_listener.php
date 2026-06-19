@@ -74,13 +74,24 @@ class main_listener implements EventSubscriberInterface {
      * $user->setup('acp/common');
      */
     public function user_setup_after($event) {
+        $loginUri = "/ucp.php?mode=login&login=external&oauth_service=keycloak";
+        $requestUri = str_replace(
+            '&amp;',
+            '&',
+            $this->request->variable('REQUEST_URI', '', false, request_interface::SERVER)
+        );
+
         /*
          * Do not show login form.
          * Instead redirect to keycloak login:
          */
-        if ($this->user->data['user_id'] == ANONYMOUS) {
-            $this->request->overwrite('oauth_service', 'keycloak');
-            $this->auth->login("", "");
+        if (
+            $this->user->data['user_id'] == ANONYMOUS
+            && $requestUri !== $loginUri
+            && !str_starts_with($requestUri, '/app.php/user/oauth/authenticate/keycloak')
+            && !str_starts_with($requestUri, '/ucp.php?mode=login&login=external&oauth_service=keycloak')
+        ) {
+            redirect($loginUri);
         }
 
         /*
